@@ -27,7 +27,7 @@ public class ShopInfoController{
 
 
     @PostMapping("/updateShopInfo")
-    public SimpleResponse updateShopInfo(HttpServletRequest request,@RequestBody ShopInfoForm shopInfoForm){
+    public SimpleResponse updateShopInfoAuth(HttpServletRequest request,@RequestBody ShopInfoForm shopInfoForm){
         try{
             return SimpleResponse.success(shopInfoService.updateShopInfo(request,shopInfoForm));
         }catch (Exception e){

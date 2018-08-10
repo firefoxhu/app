@@ -37,7 +37,7 @@ public class MchntController {
     }
 
     @GetMapping("/mchntInfo")
-    public SimpleResponse findMchntByUserId(HttpServletRequest request){
+    public SimpleResponse findMchntByUserIdAuth(HttpServletRequest request){
         try {
             return SimpleResponse.success(mchntService.findMchntByUserId(request));
         }catch (MchntUnBindingException e){
@@ -47,7 +47,7 @@ public class MchntController {
         }
     }
     @GetMapping("/binding")
-    public SimpleResponse binding(HttpServletRequest request){
+    public SimpleResponse bindingAuth(HttpServletRequest request){
         try {
             return SimpleResponse.success(mchntService.checkUserBindingMchnt(request));
         }catch (MchntUnBindingException e){

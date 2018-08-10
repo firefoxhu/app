@@ -19,7 +19,7 @@ public class MessageController {
     private MessageService messageService;
 
     @GetMapping("/list")
-    public SimpleResponse messageList(HttpServletRequest request, @PageableDefault(page = 0,size = 8,sort = {"isRead","createTime"},direction = Sort.Direction.DESC) Pageable pageable){
+    public SimpleResponse messageListAuth(HttpServletRequest request, @PageableDefault(page = 0,size = 8,sort = {"isRead","createTime"},direction = Sort.Direction.DESC) Pageable pageable){
         try {
             return SimpleResponse.success(messageService.messageList(request,pageable));
         }catch (Exception e){
@@ -28,7 +28,7 @@ public class MessageController {
     }
 
     @PostMapping("/readed")
-    public SimpleResponse  updateReaded(@RequestBody MessageForm messageForm){
+    public SimpleResponse  updateReadedAuth(@RequestBody MessageForm messageForm){
         try {
             return SimpleResponse.success(messageService.updateReaded(messageForm.getMessageId()));
         }catch (Exception e){
@@ -37,7 +37,7 @@ public class MessageController {
     }
 
     @PostMapping("/remove")
-    public SimpleResponse  remove(HttpServletRequest request,@RequestBody MessageForm messageForm){
+    public SimpleResponse  removeAuth(HttpServletRequest request,@RequestBody MessageForm messageForm){
         try {
             return SimpleResponse.success(messageService.remove(request,messageForm.getMessageId()));
         }catch (Exception e){
@@ -46,7 +46,7 @@ public class MessageController {
     }
 
     @GetMapping("/unReaderCount")
-    public SimpleResponse  unReaderCount(HttpServletRequest request){
+    public SimpleResponse  unReaderCountAuth(HttpServletRequest request){
         try {
             return SimpleResponse.success(messageService.unReaderCount(request));
         }catch (Exception e){

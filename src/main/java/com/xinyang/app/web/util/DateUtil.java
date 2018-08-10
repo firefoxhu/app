@@ -15,7 +15,6 @@ public class DateUtil {
         long calceSceond = nowSecond - agoSecond;
 
         if(calceSceond < 60) {
-            System.out.println(calceSceond);
             return "刚刚";
         }else if(60 <= calceSceond && calceSceond < 60*60){ // 一小时
             return calceSceond/60 + "分钟前";

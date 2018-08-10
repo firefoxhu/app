@@ -21,7 +21,7 @@ public class FileUploadController {
     private XyProperties xyProperties;
 
     @PostMapping("upload")
-    public String upload(MultipartFile file){
+    public String uploadAuth(MultipartFile file){
 
         try {
             return FileUtil.localUpload2(xyProperties.getFileConfig().getTempDir(),file.getOriginalFilename(),file.getInputStream());

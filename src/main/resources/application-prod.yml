@@ -32,12 +32,19 @@ spring:
     port: 6379
     database: 0
     password: redis
+  ###解决系统给我们处理的其它异常##
+  mvc:
+    throw-exception-if-no-handler-found: true
+  #出现错误时, 直接抛出异常
+  resources:
+    add-mappings: false
+#不要为我们工程中的资源文件建立映射
 xy:
   config:
     file-config:
       temp-dir: /home/temp/
       image-server: http://image.luosen365.com/
     wx-config:
-      app-id: wx886da5540ca9dba24
-      secret: 373b3e68734368a0d4ff76403d213da23
+      app-id: wx886da5540ca9dba4
+      secret: 373b3e68734368a0d4ff76403d213da3
 

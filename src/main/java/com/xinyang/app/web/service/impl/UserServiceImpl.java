@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -57,10 +58,14 @@ public class UserServiceImpl implements UserService {
 
         // 模拟生成 3r_session
         String r_session = UUID.randomUUID().toString();
+        Optional.ofNullable(
+                wxSession.getExpired_session()
+        ).map(e->
+
+                redisTemplate.delete(wxSession.getExpired_session())
+        ).orElse(false);
 
         // 放入缓存做登录状态
-        redisTemplate.delete(wxSession.getExpired_session());
-
         redisTemplate.opsForValue().set(r_session,user,7, TimeUnit.DAYS);
 
         Map<String,Object> map = Maps.newHashMap();

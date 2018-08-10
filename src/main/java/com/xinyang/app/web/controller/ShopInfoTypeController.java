@@ -18,7 +18,7 @@ public class ShopInfoTypeController {
 
 
     @PostMapping("/binding")
-    public SimpleResponse bindingType(HttpServletRequest request, @RequestBody ShopInfoTypeForm shopInfoTypeForm){
+    public SimpleResponse bindingTypeAuth(HttpServletRequest request, @RequestBody ShopInfoTypeForm shopInfoTypeForm){
         try {
             return SimpleResponse.success(shopInfoTypeService.bindingType(request, shopInfoTypeForm.getTypeIds()));
         }catch (Exception e){

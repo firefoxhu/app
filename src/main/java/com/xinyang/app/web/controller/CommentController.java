@@ -1,6 +1,7 @@
 package com.xinyang.app.web.controller;
 import com.xinyang.app.web.domain.form.CommentForm;
 import com.xinyang.app.web.domain.support.SimpleResponse;
+import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -24,13 +25,20 @@ public class CommentController {
 
     @GetMapping("/list")
     public SimpleResponse findCommentByArticleId(@PageableDefault(page = 0,size = 8,sort = {"createTime","fabulous"},direction = Sort.Direction.DESC) Pageable page, Long articleId){
-        return SimpleResponse.success(commentService.findComment(articleId,page));
+        try{
+            return SimpleResponse.success(commentService.findComment(articleId,page));
+        }catch (Exception e){
+            return SimpleResponse.error(e.getMessage());
+        }
     }
 
     @PostMapping("/write")
-    public SimpleResponse writeComment(HttpServletRequest request, @RequestBody @Valid CommentForm commentForm, BindingResult bindingResult){
+    public SimpleResponse writeCommentAuth(HttpServletRequest request, @RequestBody @Valid CommentForm commentForm){
         try{
             return SimpleResponse.success(commentService.writeComment(request,commentForm));
+        }catch (AuthException e){
+            e.printStackTrace();
+            return SimpleResponse.error(e.getCode(),e.getMessage());
         }catch (Exception e){
             return SimpleResponse.error(e.getMessage());
         }

@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Optional;
@@ -129,7 +128,9 @@ public class CommentServiceImpl implements CommentService {
                             .avatar(
                                     c.getAnonymous().equals("0") ? (user.getAvatar() == null ? user.getAnonymousAvatar() : user.getNickname()) : user.getAnonymousAvatar()
                             )
-                            .createTime(DateUtil.calculateTime(c.getCreateTime()))
+                            .createTime(
+                                    DateUtil.calculateTime(c.getCreateTime())
+                            )
                             .build()
         ).orElseThrow(()->
                 new RuntimeException("评论文章失败！")

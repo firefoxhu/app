@@ -1,6 +1,7 @@
 package com.xinyang.app.web.controller;
 import com.xinyang.app.web.domain.form.ArticleForm;
 import com.xinyang.app.web.domain.support.SimpleResponse;
+import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,7 @@ public class ArticleController {
     }
 
     @GetMapping("/listOwner")
-    public SimpleResponse listOwner(HttpServletRequest request,@PageableDefault(page = 0,size = 8,sort = {"createTime"},direction = Sort.Direction.DESC) Pageable page){
+    public SimpleResponse listOwnerAuth(HttpServletRequest request,@PageableDefault(page = 0,size = 8,sort = {"createTime"},direction = Sort.Direction.DESC) Pageable page){
         return SimpleResponse.success(articleService.listOwnerTimeLine(request, page));
     }
 
@@ -38,7 +39,7 @@ public class ArticleController {
     }
 
     @PostMapping("/write")
-    public DeferredResult<SimpleResponse> writeArticle(HttpServletRequest request, @RequestBody @Valid ArticleForm articleForm, BindingResult bindingResult){
+    public DeferredResult<SimpleResponse> writeArticleAuth(HttpServletRequest request, @RequestBody @Valid ArticleForm articleForm, BindingResult bindingResult){
         DeferredResult<SimpleResponse> deferredResult = new DeferredResult<>();
 
         CompletableFuture.supplyAsync(()->
@@ -75,15 +76,23 @@ public class ArticleController {
 
 
     @GetMapping("/countArticle")
-    public SimpleResponse countArticleByUser(HttpServletRequest request){
-        return SimpleResponse.success(articleService.countArticleByUser(request));
+    public SimpleResponse countArticleByUserAuth(HttpServletRequest request){
+        try{
+            return SimpleResponse.success(articleService.countArticleByUser(request));
+        }catch (AuthException e){
+            return SimpleResponse.error(e.getCode(),e.getMessage());
+        }catch (Exception e){
+            return SimpleResponse.error(e.getMessage());
+        }
     }
 
 
     @PostMapping("/remove")
-    public SimpleResponse remove(HttpServletRequest request,@RequestBody ArticleForm articleForm){
+    public SimpleResponse removeAuth(HttpServletRequest request,@RequestBody ArticleForm articleForm){
        try {
            return SimpleResponse.success(articleService.removeByArticleId(request,articleForm.getArticleId()));
+       }catch (AuthException e){
+           return SimpleResponse.error(e.getCode(),e.getMessage());
        }catch (Exception e){
            return SimpleResponse.error(e.getMessage());
        }
