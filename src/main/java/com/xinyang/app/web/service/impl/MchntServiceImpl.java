@@ -69,7 +69,7 @@ public class MchntServiceImpl implements MchntService {
     @Override
     public Map<String, Object> mchntCome(HttpServletRequest request, MchntForm mchntForm){
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         // 判断当前微信号是否绑定过商户了
         Mchnt wxBindMchnt = mchntRepository.findMchntByUserId(user.getId());
@@ -156,7 +156,7 @@ public class MchntServiceImpl implements MchntService {
 
     @Override
     public Map<String, Object> findMchntByUserId(HttpServletRequest request) {
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         Mchnt mchnt = Optional.ofNullable(mchntRepository.findMchntByUserId(user.getId())).orElseThrow(()->new MchntUnBindingException(MchntEnum.MCHNT_UNBIND));
 
@@ -207,7 +207,7 @@ public class MchntServiceImpl implements MchntService {
 
     @Override
     public Map<String, Object> checkUserBindingMchnt(HttpServletRequest request) {
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
         Mchnt mchnt = Optional.ofNullable(mchntRepository.findMchntByUserId(user.getId())).orElseThrow(()->new MchntUnBindingException(MchntEnum.MCHNT_UNBIND));
         return ResultMap.getInstance().put("message","已绑定").toMap();
     }

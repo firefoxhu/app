@@ -35,7 +35,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Map<String, Object> messageList(HttpServletRequest request, Pageable pageable) {
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         Page<Message> messages = messageRepository.findAll((root, query, cb)->cb.and((Predicate[])Arrays.asList(
                 cb.and(cb.equal(root.get("toUser"), user.getId())),
@@ -62,7 +62,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Map<String, Object> unReaderCount(HttpServletRequest request) {
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
         return ResultMap.getInstance().put("unReadCount",
                 messageRepository.count((root,query,cb)->
                         cb.and((Predicate[])Arrays.asList(
@@ -91,7 +91,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public Map<String, Object> remove(HttpServletRequest request,long messageId) {
 
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         Message message = messageRepository.findById(messageId).orElseThrow(()->new RuntimeException("删除失败！消息不存在"));
         // user.getId() == message.getToUser()  X  long类型的不能用 == 比较  最好转为字符串

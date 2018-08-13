@@ -95,7 +95,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Map<String, Object> listOwnerTimeLine(HttpServletRequest request,Pageable pageable) {
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u ).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u ).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         Page<Article> page = articleRepository.findArticleByUserAndStatus(pageable,user,"0");
 
@@ -132,7 +132,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public  Map<String,Object> writeArticle(HttpServletRequest request, ArticleForm articleForm) {
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
 
         if(articleForm.getAnonymous().equals("0")){ // 更新用户的基本信息
@@ -259,7 +259,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public Map<String, Object> countArticleByUser(HttpServletRequest request) {
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
         return ResultMap.getInstance().put("countArticle",
                 articleRepository.countArticleByUser(user)
         ).toMap();
@@ -270,7 +270,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Map<String, Object> removeByArticleId(HttpServletRequest request, long articleId) {
 
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         Optional.ofNullable(articleRepository.findArticleByUserAndStatusAndId(user,"0",articleId)).map(article ->
                 articleRepository.updateStatus("1",articleId)

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Enumeration;
 import java.util.Optional;
 
 @Aspect
@@ -33,19 +34,31 @@ public class LogAspect {
         String methodName = pjp.getSignature().getName();
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 
+        Enumeration enum1 = request.getHeaderNames();
+        log.debug("-----------header----------------->");
+        while(enum1.hasMoreElements()){
+            String key = (String)enum1.nextElement();
+            String value = request.getHeader(key);
+            log.info(key + ":" + value);
+        }
 
-        String session = request.getHeader("xy365_3rd_session");
+        String session = request.getHeader("Third-Session");
+        log.info("Third-Session",session);
         //判断当前方法是否需要权限验证
         if(methodName.contains("Auth")){
             log.info("需要进行权限登录认证！");
-            User user = Optional.ofNullable(
+            Optional.ofNullable(
                     redisTemplate.opsForValue().get(
                             session == null ? "" : session
                     )
-            ).map(u->
-                    (User)u
-            ).orElseThrow(()->new AuthException("请登录小程序！"));
-            log.info("当前用户：{}",user);
+            ).map(u->{
+                log.info("认证成功当前用户：{}",u);
+                return  (User)u;
+            }).orElseThrow(()->{
+                log.info("该用户未登录 认证失败！");
+                return new AuthException("请登录小程序！");
+            });
+
         }
         log.info("客户端IP地址：{}", IpUtil.getIpAddr(request));
         log.info(">>请求的控制器名称：{}", pjp.getTarget().getClass().getName());
@@ -66,7 +79,7 @@ public class LogAspect {
             log.error("操作异常结果：{}",throwable.getMessage());
             new RuntimeException(throwable.getMessage());
         }
-        log.info(">>返回的结果：{}",result);
+        log.info(">>返回的结果：{}","OK");
         log.info(">>>>>>>>>>>>>>>>>>>>>>>>>系统拦截请求关闭<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
         return result;
     }

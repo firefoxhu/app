@@ -40,7 +40,7 @@ public class ShopInfoTypeServiceImpl implements ShopInfoTypeService {
     @Override
     public Map<String, Object> bindingType(HttpServletRequest request,String typeIds) {
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
 
         Mchnt mchnt = mchntRepository.findMchntByUserId(user.getId());
 

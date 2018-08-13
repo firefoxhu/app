@@ -75,7 +75,7 @@ public class CommentServiceImpl implements CommentService {
     public Map<String,Object> writeComment(HttpServletRequest request, CommentForm commentForm) {
 
         User user = Optional.ofNullable(
-                redisTemplate.opsForValue().get(request.getHeader("xy365_3rd_session"))
+                redisTemplate.opsForValue().get(request.getHeader("Third-Session"))
         ).map(u->
                 (User)u
         ).orElseThrow(()->
