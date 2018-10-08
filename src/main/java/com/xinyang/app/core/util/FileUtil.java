@@ -45,7 +45,7 @@ public class FileUtil {
         try {
 
             // 生成缩略图
-            Thumbnails.of(new File(dest)).scale(1.0).outputQuality(0.25).toFile(dest);
+            Thumbnails.of(new File(dest)).scale(1.0).outputQuality(0.6).toFile(dest);
 
             // 压缩图片大小
             Thumbnails.of(dest).height(180).outputQuality(1.0).toFile((sourcePath + "S" + fileName));

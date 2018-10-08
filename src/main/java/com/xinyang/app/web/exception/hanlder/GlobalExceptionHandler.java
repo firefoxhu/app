@@ -1,12 +1,14 @@
 package com.xinyang.app.web.exception.hanlder;
 import com.xinyang.app.web.domain.support.SimpleResponse;
 import com.xinyang.app.web.exception.AuthException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler{
 
     /**

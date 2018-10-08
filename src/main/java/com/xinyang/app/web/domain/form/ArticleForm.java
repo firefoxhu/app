@@ -1,18 +1,17 @@
 package com.xinyang.app.web.domain.form;
 
 import lombok.Data;
-
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
+/**
+ * {@link com.xinyang.app.core.model.Article}
+ */
 @Data
 public class ArticleForm {
 
 
     private Long articleId;
 
-    @NotNull(message="您还是写点什么吧！")
     @Max(value = 256,message = "您是个有故事的人，可系统限制我只能让您输入小于256个字，我很抱歉！ ")
     @Min(value = 6,message = "您输入字太少了，语言是打开心灵的大门，在多说点吧！")
     private String content;
