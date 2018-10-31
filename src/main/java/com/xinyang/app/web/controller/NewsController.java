@@ -130,6 +130,36 @@ public class NewsController {
         }
     }
 
+    @GetMapping("/shop")
+    public Object shop(@PageableDefault(page = 0,size = 8) Pageable pageable){
+        String url = "http://39.107.228.75:9001/shop?page="+pageable.getPageNumber()+"&size="+pageable.getPageSize();
+        try{
+            return this.sendHttpGet(url);
+        }catch (Exception e){
+            return SimpleResponse.fail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/post/list")
+    public Object post(@PageableDefault(page = 0,size = 8) Pageable pageable){
+        String url = "http://39.107.228.75:9001/post/list?page="+pageable.getPageNumber()+"&size="+pageable.getPageSize();
+        try{
+            return this.sendHttpGet(url);
+        }catch (Exception e){
+            return SimpleResponse.fail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/video/list")
+    public Object video(@PageableDefault(page = 0,size = 8) Pageable pageable,String categoryId){
+        String url = "http://39.107.228.75:9001/video/list?page="+pageable.getPageNumber()+"&size="+pageable.getPageSize()+"&categoryId="+categoryId;
+        try{
+            return this.sendHttpGet(url);
+        }catch (Exception e){
+            return SimpleResponse.fail(e.getMessage());
+        }
+    }
+
 
 
 

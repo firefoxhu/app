@@ -8,6 +8,7 @@ import com.xinyang.app.web.domain.dto.CommentDTO;
 import com.xinyang.app.web.domain.form.CommentForm;
 import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.CommentService;
+import com.xinyang.app.web.service.UserService;
 import com.xinyang.app.web.util.DateUtil;
 import com.xinyang.app.web.util.IpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,15 +52,18 @@ public class CommentServiceImpl implements CommentService {
 
         map.put("hasNext",page.hasNext());
         map.put("list",page.getContent().stream().map(e->
-                CommentDTO.builder().
-                        commentId(e.getId()).
+                CommentDTO.builder()
+                        .username(e.getUser().getUsername())
+                        .commentId(e.getId()).
                         avatar(
-                                e.getAnonymous().equals("0") ? e.getUser().getAvatar() : e.getUser().getAnonymousAvatar()
+                                //e.getAnonymous().equals("0") ? e.getUser().getAvatar() : e.getUser().getAnonymousAvatar()
+                                e.getUser().getAvatar()
                         ).
                         fabulous(e.getFabulous()).
                         content(e.getContent()).
                         nickname(
-                                e.getAnonymous().equals("0") ? e.getUser().getNickname() : e.getUser().getAnonymousName()
+                               // e.getAnonymous().equals("0") ? e.getUser().getNickname() : e.getUser().getAnonymousName()
+                                e.getUser().getNickname() == null ? e.getUser().getUsername() : e.getUser().getNickname()
                         ).
                         createTime(DateUtil.calculateTime(e.getCreateTime()))
                         .location(e.getLocation())
@@ -74,31 +78,30 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Map<String,Object> writeComment(HttpServletRequest request, CommentForm commentForm) {
 
-        User user = Optional.ofNullable(
-                redisTemplate.opsForValue().get(request.getHeader("Third-Session"))
-        ).map(u->
-                (User)u
-        ).orElseThrow(()->
-                new AuthException("纳秒之间的用户登录过期！万年一见。")
-        );
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
 
-        if(commentForm.getAnonymous().equals("0")){ // 更新用户的基本信息
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败！");
+        }
+
+        if(commentForm.getAnonymous() != null && commentForm.getAnonymous().equals("0")){  // 更新用户的基本信息
             User user1 = userRepository.findById(user.getId()).get();
             userRepository.save(
-                    User.builder().id(user1.getId())
-                            .openId(user1.getOpenId())
-                            .avatar(
-                                    Optional.ofNullable(commentForm.getAvatar()).orElse(user1.getAvatar())
-                            )
-                            .nickname(
-                                    Optional.ofNullable(commentForm.getNickname()).orElse(user1.getNickname())
-                            )
-                            .anonymousAvatar(
-                                    user1.getAnonymousAvatar()
-                            )
-                            .anonymousName(
-                                    user1.getAnonymousName()
-                            )
+                    User.builder()
+                            .id(user1.getId())
+                            .openId(user1.getOpenId() == null ? "" : user1.getOpenId())
+                            .avatar(Optional.ofNullable(commentForm.getAvatar()).orElse(user1.getAvatar()))
+                            .nickname(Optional.ofNullable(commentForm.getNickname()).orElse(user1.getNickname()))
+                            .anonymousAvatar(user1.getAnonymousAvatar())
+                            .anonymousName(user1.getAnonymousName())
                             .status(user1.getStatus())
                             .build()
             );
@@ -108,14 +111,15 @@ public class CommentServiceImpl implements CommentService {
 
         CommentDTO commentDTO = Optional.of(
                 commentRepository.save(
-                    Comment.builder().content(commentForm.getContent()).location(commentForm.getLocation()).user(
-                            User.builder().id(user.getId()).build()
-                    ).articleId(
-                          Long.valueOf(commentForm.getArticleId())
-                    ).location(
-                            Optional.ofNullable(commentForm.getLocation()).orElse("信阳市（默认）")
-                    ).anonymous(commentForm.getAnonymous())
-                    .ip((IpUtil.getIpAddr(request))).build()
+                    Comment.builder()
+                    .content(commentForm.getContent())
+                    .location(commentForm.getLocation())
+                    .user(User.builder().id(user.getId()).build())
+                    .articleId(Long.valueOf(commentForm.getArticleId()))
+                    .location(Optional.ofNullable(commentForm.getLocation()).orElse("信阳市（默认）"))
+                    .anonymous(commentForm.getAnonymous())
+                    .ip((IpUtil.getIpAddr(request)))
+                    .build()
                 )
         ).map(c -> CommentDTO.builder()
                             .location(c.getLocation())
@@ -123,10 +127,12 @@ public class CommentServiceImpl implements CommentService {
                             .commentId(c.getId())
                             .fabulous(c.getFabulous())
                             .nickname(
-                                    c.getAnonymous().equals("0") ? (user.getNickname()  == null ? "未授权" : user.getNickname()) : (user.getAnonymousName())
+                                    // c.getAnonymous().equals("0") ? (user.getNickname()  == null ? "未授权" : user.getNickname()) : (user.getAnonymousName())
+                                    user.getUsername() == null ? user.getNickname() : user.getUsername()
                             )
                             .avatar(
-                                    c.getAnonymous().equals("0") ? (user.getAvatar() == null ? user.getAnonymousAvatar() : user.getNickname()) : user.getAnonymousAvatar()
+                                   // c.getAnonymous().equals("0") ? (user.getAvatar() == null ? user.getAnonymousAvatar() : user.getNickname()) : user.getAnonymousAvatar()
+                                    user.getAvatar()
                             )
                             .createTime(
                                     DateUtil.calculateTime(c.getCreateTime())

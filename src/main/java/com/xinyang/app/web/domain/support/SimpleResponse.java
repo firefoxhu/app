@@ -46,7 +46,7 @@ public class SimpleResponse<T>{
     }
 
     public static <T> SimpleResponse error(int code,String msg){
-        return SimpleResponse.builder().code(-1).msg(msg).timestamp( LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8"))).nonceStr(RandomString.make(RandomString.DEFAULT_LENGTH)).code(code).build();
+        return SimpleResponse.builder().code(code).msg(msg).timestamp( LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8"))).nonceStr(RandomString.make(RandomString.DEFAULT_LENGTH)).build();
     }
 
 }

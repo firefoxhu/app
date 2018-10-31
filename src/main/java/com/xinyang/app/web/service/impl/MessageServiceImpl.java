@@ -7,6 +7,7 @@ import com.xinyang.app.web.domain.dto.MessageDTO;
 import com.xinyang.app.web.domain.support.ResultMap;
 import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.MessageService;
+import com.xinyang.app.web.service.UserService;
 import com.xinyang.app.web.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,7 +36,19 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Map<String, Object> messageList(HttpServletRequest request, Pageable pageable) {
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Page<Message> messages = messageRepository.findAll((root, query, cb)->cb.and((Predicate[])Arrays.asList(
                 cb.and(cb.equal(root.get("toUser"), user.getId())),
@@ -62,7 +75,19 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Map<String, Object> unReaderCount(HttpServletRequest request) {
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
         return ResultMap.getInstance().put("unReadCount",
                 messageRepository.count((root,query,cb)->
                         cb.and((Predicate[])Arrays.asList(
@@ -91,7 +116,19 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public Map<String, Object> remove(HttpServletRequest request,long messageId) {
 
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Message message = messageRepository.findById(messageId).orElseThrow(()->new RuntimeException("删除失败！消息不存在"));
         // user.getId() == message.getToUser()  X  long类型的不能用 == 比较  最好转为字符串

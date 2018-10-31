@@ -27,6 +27,18 @@ public class User implements Serializable{
     private String openId;
 
     @Column(length = 64)
+    private String username;
+
+    @Column(length = 128)
+    private String password;
+
+    @Column(length = 2)
+    private String gender;
+
+    @Column(length = 11)
+    private String mobile;
+
+    @Column(length = 64)
     private String nickname;
 
     @Column(length = 256)

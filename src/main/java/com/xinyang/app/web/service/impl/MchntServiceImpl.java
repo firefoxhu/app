@@ -14,6 +14,7 @@ import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.exception.MchntUnBindingException;
 import com.xinyang.app.web.service.MchntService;
 import com.xinyang.app.web.service.MessageService;
+import com.xinyang.app.web.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,19 @@ public class MchntServiceImpl implements MchntService {
     @Override
     public Map<String, Object> mchntCome(HttpServletRequest request, MchntForm mchntForm){
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         // 判断当前微信号是否绑定过商户了
         Mchnt wxBindMchnt = mchntRepository.findMchntByUserId(user.getId());
@@ -156,7 +169,19 @@ public class MchntServiceImpl implements MchntService {
 
     @Override
     public Map<String, Object> findMchntByUserId(HttpServletRequest request) {
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Mchnt mchnt = Optional.ofNullable(mchntRepository.findMchntByUserId(user.getId())).orElseThrow(()->new MchntUnBindingException(MchntEnum.MCHNT_UNBIND));
 
@@ -207,7 +232,19 @@ public class MchntServiceImpl implements MchntService {
 
     @Override
     public Map<String, Object> checkUserBindingMchnt(HttpServletRequest request) {
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
         Mchnt mchnt = Optional.ofNullable(mchntRepository.findMchntByUserId(user.getId())).orElseThrow(()->new MchntUnBindingException(MchntEnum.MCHNT_UNBIND));
         return ResultMap.getInstance().put("message","已绑定").toMap();
     }

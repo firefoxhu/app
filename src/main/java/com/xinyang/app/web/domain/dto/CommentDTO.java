@@ -12,6 +12,8 @@ public class CommentDTO {
 
     private Long commentId;
 
+    private String username;
+
     private String avatar;
 
     private String nickname;

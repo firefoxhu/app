@@ -1,5 +1,6 @@
 package com.xinyang.app.web.domain.dto;
 
+import com.xinyang.app.core.model.Fabulous;
 import lombok.Builder;
 import lombok.Data;
 
@@ -33,5 +34,7 @@ public class ArticleDTO {
     private String createTime;
 
     private List<CommentDTO> comments;
+
+    private List<Fabulous> fabulousList;
 
 }

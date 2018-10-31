@@ -7,6 +7,7 @@ import com.xinyang.app.core.repository.ShopRepository;
 import com.xinyang.app.web.domain.support.ResultMap;
 import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.ShopInfoTypeService;
+import com.xinyang.app.web.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,19 @@ public class ShopInfoTypeServiceImpl implements ShopInfoTypeService {
     @Override
     public Map<String, Object> bindingType(HttpServletRequest request,String typeIds) {
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Mchnt mchnt = mchntRepository.findMchntByUserId(user.getId());
 

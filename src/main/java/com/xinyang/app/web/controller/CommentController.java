@@ -40,6 +40,7 @@ public class CommentController {
             e.printStackTrace();
             return SimpleResponse.error(e.getCode(),e.getMessage());
         }catch (Exception e){
+            e.printStackTrace();
             return SimpleResponse.error(e.getMessage());
         }
     }

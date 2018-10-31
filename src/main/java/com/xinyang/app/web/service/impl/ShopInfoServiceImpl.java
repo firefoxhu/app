@@ -13,6 +13,7 @@ import com.xinyang.app.web.domain.form.ShopInfoForm;
 import com.xinyang.app.web.domain.support.ResultMap;
 import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.ShopInfoService;
+import com.xinyang.app.web.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -59,9 +60,19 @@ public class ShopInfoServiceImpl implements ShopInfoService {
     @Override
     public Map<String, Object> updateShopInfo(HttpServletRequest request, ShopInfoForm shopInfoForm) {
 
-        log.info("正在修改门店信息(哪个不为空修改哪里)：{}",shopInfoForm);
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Mchnt mchnt = mchntRepository.findMchntByUserId(user.getId());
 

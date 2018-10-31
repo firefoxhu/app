@@ -6,6 +6,7 @@ import com.xinyang.app.core.model.User;
 import com.xinyang.app.core.properties.XyProperties;
 import com.xinyang.app.core.repository.ArticleRepository;
 import com.xinyang.app.core.repository.CommentRepository;
+import com.xinyang.app.core.repository.FabulousRepository;
 import com.xinyang.app.core.repository.UserRepository;
 import com.xinyang.app.core.util.FileUtil;
 import com.xinyang.app.web.domain.dto.ArticleDTO;
@@ -13,12 +14,15 @@ import com.xinyang.app.web.domain.form.ArticleForm;
 import com.xinyang.app.web.domain.support.ResultMap;
 import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.ArticleService;
+import com.xinyang.app.web.service.CommentService;
 import com.xinyang.app.web.service.MessageService;
+import com.xinyang.app.web.service.UserService;
 import com.xinyang.app.web.util.DateUtil;
 import com.xinyang.app.web.util.IpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -47,6 +51,9 @@ public class ArticleServiceImpl implements ArticleService {
     private CommentRepository commentRepository;
 
     @Autowired
+    private FabulousRepository fabulousRepository;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
 
@@ -62,12 +69,11 @@ public class ArticleServiceImpl implements ArticleService {
         Map<String,Object> map = Maps.newHashMap();
         map.put("hasNext",page.hasNext());
         map.put("list",page.getContent().parallelStream().map(o->
-                                    ArticleDTO.builder().articleId(o.getId())
-                                            .avatar(
-                                                    o.getAnonymous().equals("1") ? o.getUser().getAnonymousAvatar() : o.getUser().getAvatar()
-                                            ).author(
-                                                    o.getAnonymous().equals("1") ? o.getUser().getAnonymousName() : o.getUser().getNickname()
-                                            )
+                                    ArticleDTO
+                                            .builder()
+                                            .articleId(o.getId())
+                                            .avatar(o.getUser().getAvatar())
+                                            .author(o.getUser().getUsername() == null ? o.getUser().getNickname() : o.getUser().getUsername())
                                             .top(o.getTop())
                                             .views(o.getViews())
                                             .content(o.getContent())
@@ -75,18 +81,16 @@ public class ArticleServiceImpl implements ArticleService {
                                             .location(o.getLocation())
                                             .createTime(DateUtil.calculateTime(o.getCreateTime()))
                                             .fabulous(o.getFabulous())
-                                    .pictures(
-                                            Optional.ofNullable(o.getPictures())
-                                                    .map(
-                                                            picture-> Arrays.asList(picture.split(",")).stream().map(p->
-                                                                    xyProperties.getFileConfig().getImageServer() + p).collect(Collectors.toList()
-                                                            )
-                                                    ).orElse(null)
-                                    )
+                                            .pictures(
+                                                    Optional.ofNullable(o.getPictures())
+                                                            .map(
+                                                                    picture-> Arrays.asList(picture.split(",")).stream().map(p->
+                                                                            xyProperties.getFileConfig().getImageServer() + p).collect(Collectors.toList()
+                                                                    )
+                                                            ).orElse(null)
+                                            )
                                             //最好放在最后位置处理 否则会出现无效的问题
-                                    .commentsNumber(
-                                            commentRepository.count((root,query,cb)->cb.equal(root.get("articleId"),o.getId()))
-                                    )
+                                            .commentsNumber(commentRepository.count((root,query,cb)->cb.equal(root.get("articleId"),o.getId())))
                                    .build()
         ).collect(Collectors.toList()));
         return map;
@@ -95,7 +99,19 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Map<String, Object> listOwnerTimeLine(HttpServletRequest request,Pageable pageable) {
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u ).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Page<Article> page = articleRepository.findArticleByUserAndStatus(pageable,user,"0");
 
@@ -132,7 +148,19 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public  Map<String,Object> writeArticle(HttpServletRequest request, ArticleForm articleForm) {
 
-        User user = Optional.ofNullable(redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()->new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
 
         if(articleForm.getAnonymous().equals("0")){ // 更新用户的基本信息
@@ -144,7 +172,7 @@ public class ArticleServiceImpl implements ArticleService {
                                Optional.ofNullable(articleForm.getAvatar()).orElse(user1.getAvatar())
                            )
                            .nickname(
-                                   Optional.ofNullable(articleForm.getNickname()).orElse(user1.getNickname())
+                                   Optional.ofNullable(articleForm.getNickname()).orElse(user1.getUsername())
                            )
                            .anonymousAvatar(
                                    user1.getAnonymousAvatar()
@@ -152,7 +180,11 @@ public class ArticleServiceImpl implements ArticleService {
                            .anonymousName(
                                    user1.getAnonymousName()
                            )
-                           .status(user1.getStatus())
+                           .gender(user1.getGender() == null? "" :user1.getGender())
+                           .mobile(user1.getMobile() == null? "" :user1.getMobile())
+                           .password(user1.getPassword()  == null? "" :user1.getPassword())
+                           .password(user1.getUsername()  == null? "" :user1.getUsername())
+                           .status(user1.getStatus()  == null? "" :user1.getStatus())
                            .build()
            );
         }
@@ -206,7 +238,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .builder()
                 .articleId(article.getId())
                 .avatar(article.getUser().getAvatar())
-                .author(article.getUser().getNickname())
+                .author(article.getUser().getNickname() == null ? article.getUser().getUsername() : article.getUser().getNickname())
                 .top(article.getTop())
                 .views(article.getViews())
                 .commentsNumber(article.getCommentsNumber())
@@ -259,7 +291,19 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public Map<String, Object> countArticleByUser(HttpServletRequest request) {
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
         return ResultMap.getInstance().put("countArticle",
                 articleRepository.countArticleByUser(user)
         ).toMap();
@@ -270,7 +314,19 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Map<String, Object> removeByArticleId(HttpServletRequest request, long articleId) {
 
-        User user = Optional.ofNullable( redisTemplate.opsForValue().get(request.getHeader("Third-Session"))).map(u->(User)u).orElseThrow(()-> new AuthException("纳秒之间的用户登录过期！万年一见。"));
+        String xcxSession = request.getHeader("Third-Session");
+        String appSession = request.getHeader("App-Session");
+        User user;
+        try {
+            String redis_key = UserService.USER_SESSION + (xcxSession == null ? appSession : xcxSession);
+            user = (User) redisTemplate.opsForValue().get(redis_key);
+        }catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        if(user == null) {
+            throw new AuthException("业务缓存读取用户信息失败【需要重新登录】！");
+        }
 
         Optional.ofNullable(articleRepository.findArticleByUserAndStatusAndId(user,"0",articleId)).map(article ->
                 articleRepository.updateStatus("1",articleId)

@@ -1,4 +1,4 @@
-package com.xinyang.app.web.wx;
+package com.xinyang.app.web.login.wx;
 
 import com.alibaba.fastjson.JSON;
 import com.xinyang.app.core.model.User;
@@ -8,13 +8,9 @@ import com.xinyang.app.web.exception.AuthException;
 import com.xinyang.app.web.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -65,37 +61,6 @@ public class WxController {
             WxSession wxSession = JSON.parseObject(accessToken.toString(),WxSession.class);
             wxSession.setExpired_session(third_session);
             return SimpleResponse.success(userService.registerOrLogin(wxSession));
-
-
-            /*
-
-            // 生成成3rd_session
-            String[] cmdA = { "/bin/sh", "-c", "head -n 80 /dev/urandom | tr -dc A-Za-z0-9 | head -c 168" };
-
-            try {
-
-                Process process = Runtime.getRuntime().exec(cmdA);
-
-                StringBuffer thirdSession = new StringBuffer();
-                try(
-                        Reader in = new InputStreamReader(process.getInputStream());
-                        LineNumberReader br = new LineNumberReader(in)
-                ){
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        thirdSession.append(line).append("\n");
-                    }
-
-                }
-
-                redisTemplate.opsForValue().set(thirdSession.toString(),"");
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-*/
-
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -106,7 +71,7 @@ public class WxController {
     @GetMapping("/check_session")
     public SimpleResponse check_session(String third_session){
         Optional.ofNullable(
-                redisTemplate.opsForValue().get(third_session)
+                redisTemplate.opsForValue().get(UserService.USER_SESSION + third_session)
         ).map(u->(User)u).orElseThrow(()-> new AuthException("系统检查登录状态异常！"));
         return SimpleResponse.success("OK");
     }

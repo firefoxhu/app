@@ -35,9 +35,17 @@ spring:
   ###解决系统给我们处理的其它异常##
   mvc:
     throw-exception-if-no-handler-found: true
+    static-path-pattern: /**
   #出现错误时, 直接抛出异常
   resources:
-    add-mappings: false
+    add-mappings: true
+    static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,file:${xy.config.file-config.file-dir}
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 15MB
+      file-size-threshold: 0
 #不要为我们工程中的资源文件建立映射
 xy:
   config:

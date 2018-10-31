@@ -1,4 +1,4 @@
-package com.xinyang.app.web.wx;
+package com.xinyang.app.web.login.wx;
 
 import lombok.Data;
 
